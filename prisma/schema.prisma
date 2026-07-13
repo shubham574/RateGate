@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  STARTER
+  GROWTH
+  SCALE
+}
+
+enum Channel {
+  EMAIL
+  SMS
+}
+
+enum RateLimitScope {
+  API_KEY
+  RECIPIENT
+  TEMPLATE
+}
+
+enum RateLimitStrategy {
+  FIXED_WINDOW
+  SLIDING_WINDOW
+  TOKEN_BUCKET
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  RATE_LIMITED
+}
+
+// ─── Models ──────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+
+  apiKeys        ApiKey[]
+  templates      Template[]
+  rateLimitRules RateLimitRule[]
+  notifications  Notification[]
+  usageRecords   UsageRecord[]
+
+  @@map("tenants")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  tenantId   String
+  keyHash    String    @unique
+  keyPrefix  String
+  label      String
+  revoked    Boolean   @default(false)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+model Template {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  channel   Channel
+  subject   String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@unique([tenantId, name])
+  @@map("templates")
+}
+
+model RateLimitRule {
+  id          String            @id @default(uuid())
+  tenantId    String
+  scope       RateLimitScope
+  channel     Channel?
+  windowSecs  Int
+  maxRequests Int
+  strategy    RateLimitStrategy @default(SLIDING_WINDOW)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("rate_limit_rules")
+}
+
+model Notification {
+  id              String             @id @default(uuid())
+  tenantId        String
+  templateId      String?
+  channel         Channel
+  recipient       String
+  status          NotificationStatus @default(QUEUED)
+  rateLimited     Boolean            @default(false)
+  providerMsgId   String?
+  errorMessage    String?
+  idempotencyKey  String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  template Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, status])
+  @@index([recipient])
+  @@map("notifications")
+}
+
+model UsageRecord {
+  id          String   @id @default(uuid())
+  tenantId    String
+  channel     Channel
+  count       Int      @default(0)
+  periodStart DateTime
+  periodEnd   DateTime
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, periodStart, periodEnd])
+  @@map("usage_records")
+}
