@@ -66,6 +66,23 @@ router.post(
         status: 'queued',
       });
     } catch (error: any) {
+      if (error.code === 'P2002' && req.body.idempotencyKey) {
+        // Race condition: another request just created this notification
+        const tenantId = (req as Request & { auth: AuthenticatedRequest }).auth.tenantId;
+        const existing = await NotificationService.findByIdempotencyKey(
+          tenantId,
+          req.body.idempotencyKey
+        );
+        if (existing) {
+          res.status(200).json({
+            id: existing.id,
+            status: existing.status.toLowerCase(),
+            message: 'Duplicate request — returning existing notification',
+          });
+          return;
+        }
+      }
+
       if (error.statusCode) {
         res.status(error.statusCode).json({
           error: error.message,
