@@ -23,7 +23,7 @@ export async function rateLimiterMiddleware(
     const apiKeyResult = await rateLimiterService.check({
       tenantId,
       scope: RateLimitScope.API_KEY,
-      identifier: apiKeyId,
+      identifier: apiKeyId ?? 'unknown',
       channel: channelEnum,
     });
 

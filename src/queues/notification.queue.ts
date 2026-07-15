@@ -6,7 +6,7 @@ import { redis } from '../config/redis';
  * Workers consume from this queue in separate processes.
  */
 export const notificationQueue = new Queue('notifications', {
-  connection: redis,
+  connection: redis as any,
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -22,7 +22,7 @@ export const notificationQueue = new Queue('notifications', {
  * Dead Letter Queue for notifications that fail after all retries.
  */
 export const notificationDLQ = new Queue('notifications-dlq', {
-  connection: redis,
+  connection: redis as any,
 });
 
 console.log('[Queue] Notification queue initialized');

@@ -16,8 +16,8 @@ beforeAll(() => {
     maxRetriesPerRequest: null,
   });
 
-  notificationQueue = new Queue('test-notifications', { connection: redis });
-  dlqQueue = new Queue('test-notifications-dlq', { connection: redis });
+  notificationQueue = new Queue('test-notifications', { connection: redis as any });
+  dlqQueue = new Queue('test-notifications-dlq', { connection: redis as any });
 
   worker = new Worker<NotificationJobPayload>(
     'test-notifications',
@@ -25,7 +25,7 @@ beforeAll(() => {
       // Mock failure mechanism: Always throw error to simulate provider down
       throw new Error('Simulated Provider Failure');
     },
-    { connection: redis, concurrency: 1 }
+    { connection: redis as any, concurrency: 1 }
   );
 
   // Setup the DLQ event listener similar to what our actual worker does

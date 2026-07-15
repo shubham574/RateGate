@@ -56,7 +56,7 @@ const smsWorker = new Worker<NotificationJobPayload>(
     }
   },
   {
-    connection: redis,
+    connection: redis as any,
     concurrency: 5,
   }
 );
@@ -79,7 +79,7 @@ smsWorker.on('failed', async (job, err) => {
 
       // Route to DLQ
       const { Queue } = await import('bullmq');
-      const dlq = new Queue('notifications-dlq', { connection: redis });
+      const dlq = new Queue('notifications-dlq', { connection: redis as any });
       await dlq.add('failed-sms', {
         ...job.data,
         error: err.message,
