@@ -24,6 +24,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "description": "Multi-tenant Notification API with Built-in Rate Limiting",
   "dependencies": {
     "@clerk/express": "^2.1.40",
