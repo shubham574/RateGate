@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "worker:email": "tsx src/workers/email.worker.ts",
     "worker:sms": "tsx src/workers/sms.worker.ts",
+    "worker:email:prod": "node dist/src/workers/email.worker.js",
+    "worker:sms:prod": "node dist/src/workers/sms.worker.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
