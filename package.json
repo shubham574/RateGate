@@ -6,6 +6,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
     "start": "npx prisma db push --accept-data-loss && node dist/src/server.js",
+    "start:railway": "npx prisma db push --accept-data-loss && node dist/src/server.js",
     "worker:email": "tsx src/workers/email.worker.ts",
     "worker:sms": "tsx src/workers/sms.worker.ts",
     "worker:email:prod": "node dist/src/workers/email.worker.js",
