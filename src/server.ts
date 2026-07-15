@@ -1,5 +1,14 @@
 import app from './app';
 import { env } from './config/env';
+import { execSync } from 'child_process';
+
+try {
+  console.log('[RateGate] Programmatically pushing database schema...');
+  execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+  console.log('[RateGate] Database schema push complete!');
+} catch (error) {
+  console.error('[RateGate] Failed to push schema:', error);
+}
 
 app.listen(env.PORT, () => {
   console.log(`[RateGate] API server running on port ${env.PORT}`);
