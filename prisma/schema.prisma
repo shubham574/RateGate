@@ -46,11 +46,13 @@ enum NotificationStatus {
 // ─── Models ──────────────────────────────────────────────────
 
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  plan      Plan     @default(FREE)
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  clerkUserId String?  @unique
+  plan        Plan     @default(FREE)
+  webhookUrl  String?
+  createdAt   DateTime @default(now())
 
   apiKeys        ApiKey[]
   templates      Template[]

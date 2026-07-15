@@ -56,7 +56,8 @@ export interface RateLimitResult {
 
 export interface AuthenticatedRequest {
   tenantId: string;
-  apiKeyId: string;
+  apiKeyId?: string;
+  clerkUserId?: string;
 }
 
 // ─── Delivery Provider ──────────────────────────────────────

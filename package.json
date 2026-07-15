@@ -22,9 +22,11 @@
   "license": "ISC",
   "description": "Multi-tenant Notification API with Built-in Rate Limiting",
   "dependencies": {
+    "@clerk/express": "^2.1.40",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bullmq": "^5.80.2",
+    "cors": "^2.8.6",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -38,6 +40,7 @@
   "devDependencies": {
     "@swc/core": "^1.15.43",
     "@swc/jest": "^0.2.39",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.1.1",

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodSchema } from 'zod';
 
 /**
  * Zod validation middleware factory.
@@ -11,11 +11,36 @@ export function validate(schema: ZodSchema) {
     try {
       req.body = schema.parse(req.body);
       next();
-    } catch (error) {
-      if (error instanceof ZodError) {
+    } catch (error: any) {
+      if (error.name === 'ZodError' && Array.isArray(error.issues)) {
         res.status(400).json({
           error: 'validation_error',
-          details: error.errors.map((e) => ({
+          details: error.issues.map((e: any) => ({
+            field: e.path.join('.'),
+            message: e.message,
+          })),
+        });
+        return;
+      }
+      next(error);
+    }
+  };
+}
+
+/**
+ * Zod validation middleware for query parameters.
+ * Validates req.query against the provided schema.
+ */
+export function validateQuery(schema: ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      schema.parse(req.query);
+      next();
+    } catch (error: any) {
+      if (error.name === 'ZodError' && Array.isArray(error.issues)) {
+        res.status(400).json({
+          error: 'validation_error',
+          details: error.issues.map((e: any) => ({
             field: e.path.join('.'),
             message: e.message,
           })),
