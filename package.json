@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/src/server.js",
     "worker:email": "tsx src/workers/email.worker.ts",
     "worker:sms": "tsx src/workers/sms.worker.ts",
