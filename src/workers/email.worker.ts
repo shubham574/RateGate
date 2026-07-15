@@ -5,7 +5,7 @@ import { Pool } from 'pg';
 import { ResendProvider } from '../providers/resend.provider';
 import { NotificationJobPayload } from '../types';
 import dotenv from 'dotenv';
-import Redis from 'ioredis';
+import { redis } from '../config/redis';
 
 // Load env since this runs as a separate process
 dotenv.config();
@@ -14,9 +14,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 const resendProvider = new ResendProvider();
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
+// Use centralized redis instance
 
 /**
  * Email Worker
