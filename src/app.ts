@@ -13,7 +13,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ─── Health Check ────────────────────────────────────────────
+// ─── Health & Root Routes ────────────────────────────────────────────
+app.get('/', (_req, res) => {
+  res.json({ 
+    name: 'RateGate API', 
+    status: 'online', 
+    version: '1.0.0',
+    message: 'Welcome to the RateGate API. Please use the /dashboard/v1 or /v1 endpoints.'
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
