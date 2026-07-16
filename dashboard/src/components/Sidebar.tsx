@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Key, ShieldAlert, FileText, BarChart, Settings } from 'lucide-react';
+import { LayoutDashboard, Key, ShieldAlert, FileText, BarChart, Settings, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { name: 'Rate Limit Rules', href: '/rules', icon: ShieldAlert },
   { name: 'Notifications', href: '/notifications', icon: FileText },
   { name: 'Usage & Billing', href: '/usage', icon: BarChart },
+  { name: 'Documentation', href: '/docs', icon: BookOpen },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
