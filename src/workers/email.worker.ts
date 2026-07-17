@@ -6,6 +6,7 @@ import { ResendProvider } from '../providers/resend.provider';
 import { NotificationJobPayload } from '../types';
 import dotenv from 'dotenv';
 import { redis } from '../config/redis';
+import { notificationDLQ } from '../queues/notification.queue';
 
 // Load env since this runs as a separate process
 dotenv.config();
@@ -72,14 +73,11 @@ emailWorker.on('failed', async (job, err) => {
       });
 
       // Route to DLQ
-      const { Queue } = await import('bullmq');
-      const dlq = new Queue('notifications-dlq', { connection: redis as any });
-      await dlq.add('failed-email', {
+      await notificationDLQ.add('failed-email', {
         ...job.data,
         error: err.message,
         failedAt: new Date().toISOString(),
       });
-      await dlq.close();
     } catch (updateErr) {
       console.error('[EmailWorker] Failed to update notification status:', updateErr);
     }

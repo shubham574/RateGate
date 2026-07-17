@@ -208,6 +208,14 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 
     // If rate limited, include which scope/rule caused the rejection
     if (notification.status === 'RATE_LIMITED') {
+      let matchedScope: string | null = null;
+      if (notification.errorMessage && notification.errorMessage.startsWith('Rate limited: ')) {
+        const parts = notification.errorMessage.split(' ');
+        if (parts.length >= 4 && parts[3] === 'scope') {
+          matchedScope = parts[2];
+        }
+      }
+
       const rules = await prisma.rateLimitRule.findMany({
         where: {
           tenantId,
@@ -219,8 +227,12 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
         orderBy: { createdAt: 'desc' },
       });
 
-      if (rules.length > 0) {
-        response.rateLimitInfo = rules.map((rule) => ({
+      const applicableRules = matchedScope 
+        ? rules.filter(r => r.scope === matchedScope)
+        : rules;
+
+      if (applicableRules.length > 0) {
+        response.rateLimitInfo = applicableRules.map((rule) => ({
           ruleId: rule.id,
           scope: rule.scope,
           channel: rule.channel,

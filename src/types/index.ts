@@ -42,6 +42,7 @@ export interface RateLimitCheckParams {
   scope: RateLimitScope;
   identifier: string;
   channel: Channel;
+  mode?: 'PEEK' | 'COMMIT';
 }
 
 export interface RateLimitResult {

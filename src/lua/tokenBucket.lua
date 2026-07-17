@@ -6,6 +6,7 @@
 -- ARGV[2] = max tokens (bucket capacity = maxRequests)
 -- ARGV[3] = refill rate (tokens per second = maxRequests / windowSecs)
 -- ARGV[4] = TTL for the key in seconds
+-- ARGV[5] = mode ('PEEK' or 'COMMIT' or nil)
 --
 -- Returns: { allowed (0/1), remainingTokens, retryAfterMs }
 
@@ -14,6 +15,7 @@ local now = tonumber(ARGV[1])
 local maxTokens = tonumber(ARGV[2])
 local refillRate = tonumber(ARGV[3]) -- tokens per second
 local ttlSecs = tonumber(ARGV[4])
+local mode = ARGV[5]
 
 -- Get current state
 local data = redis.call('HMGET', key, 'tokens', 'lastRefillTs')
@@ -40,11 +42,17 @@ if tokens < 1 then
   local deficit = 1 - tokens
   local retryAfterMs = math.ceil((deficit / refillRate) * 1000)
   
-  -- Save state even on rejection (to track refill time correctly)
-  redis.call('HSET', key, 'tokens', tokens, 'lastRefillTs', lastRefillTs)
-  redis.call('EXPIRE', key, ttlSecs)
+  if mode ~= 'PEEK' then
+    -- Save state even on rejection (to track refill time correctly)
+    redis.call('HSET', key, 'tokens', tokens, 'lastRefillTs', lastRefillTs)
+    redis.call('EXPIRE', key, ttlSecs)
+  end
   
   return { 0, math.floor(tokens), retryAfterMs }
+end
+
+if mode == 'PEEK' then
+  return { 1, math.floor(tokens), 0 }
 end
 
 -- Consume one token

@@ -15,6 +15,7 @@ import { RateLimitStrategy } from '@prisma/client';
 class RateLimiterService {
   private slidingWindowSHA: string | null = null;
   private tokenBucketSHA: string | null = null;
+  private fixedWindowSHA: string | null = null;
   private initialized = false;
 
   /**
@@ -34,9 +35,14 @@ class RateLimiterService {
       path.join(luaDir, 'tokenBucket.lua'),
       'utf-8'
     );
+    const fixedWindowScript = fs.readFileSync(
+      path.join(luaDir, 'fixedWindow.lua'),
+      'utf-8'
+    );
 
     this.slidingWindowSHA = await redis.script('LOAD', slidingWindowScript) as string;
     this.tokenBucketSHA = await redis.script('LOAD', tokenBucketScript) as string;
+    this.fixedWindowSHA = await redis.script('LOAD', fixedWindowScript) as string;
     this.initialized = true;
 
     console.log('[RateLimiter] Lua scripts loaded and cached');
@@ -82,10 +88,24 @@ class RateLimiterService {
         now.toString(),
         rule.maxRequests.toString(),
         refillRate.toString(),
-        ttlSecs.toString()
+        ttlSecs.toString(),
+        params.mode || ''
+      )) as [number, number, number];
+    } else if (rule.strategy === RateLimitStrategy.FIXED_WINDOW) {
+      const windowMs = rule.windowSecs * 1000;
+      
+      result = (await redis.evalsha(
+        this.fixedWindowSHA!,
+        1,
+        key,
+        now.toString(),
+        windowMs.toString(),
+        rule.maxRequests.toString(),
+        rule.windowSecs.toString(),
+        params.mode || ''
       )) as [number, number, number];
     } else {
-      // Default: SLIDING_WINDOW (also handles FIXED_WINDOW for simplicity)
+      // Default: SLIDING_WINDOW
       const windowMs = rule.windowSecs * 1000;
       const requestId = uuidv4();
       const ttlSecs = rule.windowSecs + 10; // Key expires shortly after window
@@ -98,7 +118,8 @@ class RateLimiterService {
         windowMs.toString(),
         rule.maxRequests.toString(),
         requestId,
-        ttlSecs.toString()
+        ttlSecs.toString(),
+        params.mode || ''
       )) as [number, number, number];
     }
 

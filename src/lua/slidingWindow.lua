@@ -7,6 +7,7 @@
 -- ARGV[3] = max requests allowed in the window
 -- ARGV[4] = unique request ID (member for the ZSET)
 -- ARGV[5] = TTL for the key in seconds (windowSecs + buffer)
+-- ARGV[6] = mode ('PEEK' or 'COMMIT' or nil)
 --
 -- Returns: { allowed (0/1), currentCount, retryAfterMs }
 
@@ -16,6 +17,13 @@ local windowMs = tonumber(ARGV[2])
 local maxRequests = tonumber(ARGV[3])
 local requestId = ARGV[4]
 local ttlSecs = tonumber(ARGV[5])
+local mode = ARGV[6]
+
+if mode == 'COMMIT' then
+  redis.call('ZADD', key, now, requestId)
+  redis.call('EXPIRE', key, ttlSecs)
+  return { 1, 0, 0 }
+end
 
 -- Calculate the start of the current window
 local windowStart = now - windowMs
@@ -38,6 +46,10 @@ if currentCount >= maxRequests then
     end
   end
   return { 0, currentCount, retryAfterMs }
+end
+
+if mode == 'PEEK' then
+  return { 1, currentCount, 0 }
 end
 
 -- Allowed — add this request to the window

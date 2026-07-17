@@ -6,6 +6,7 @@ import { TwilioProvider } from '../providers/twilio.provider';
 import { NotificationJobPayload } from '../types';
 import dotenv from 'dotenv';
 import { redis } from '../config/redis';
+import { notificationDLQ } from '../queues/notification.queue';
 
 // Load env since this runs as a separate process
 dotenv.config();
@@ -71,14 +72,11 @@ smsWorker.on('failed', async (job, err) => {
       });
 
       // Route to DLQ
-      const { Queue } = await import('bullmq');
-      const dlq = new Queue('notifications-dlq', { connection: redis as any });
-      await dlq.add('failed-sms', {
+      await notificationDLQ.add('failed-sms', {
         ...job.data,
         error: err.message,
         failedAt: new Date().toISOString(),
       });
-      await dlq.close();
     } catch (updateErr) {
       console.error('[SMSWorker] Failed to update notification status:', updateErr);
     }
