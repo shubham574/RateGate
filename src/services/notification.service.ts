@@ -1,7 +1,7 @@
 import { prisma } from '../config/prisma';
 import { Channel, NotificationStatus } from '@prisma/client';
 import { TemplateService } from './template.service';
-import { notificationQueue } from '../queues/notification.queue';
+import { smsQueue, emailQueue } from '../queues/notification.queue';
 import { NotificationJobPayload } from '../types';
 
 /**
@@ -95,7 +95,8 @@ export class NotificationService {
       idempotencyKey,
     };
 
-    await notificationQueue.add(`notify-${channel.toLowerCase()}`, payload, {
+    const targetQueue = channel === 'SMS' ? smsQueue : emailQueue;
+    await targetQueue.add(`notify-${channel.toLowerCase()}`, payload, {
       jobId: notification.id, // Use notification ID as job ID for deduplication
       attempts: 3,
       backoff: {

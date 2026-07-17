@@ -1,11 +1,7 @@
-import { Queue } from 'bullmq';
+import { Queue, QueueOptions } from 'bullmq';
 import { redis } from '../config/redis';
 
-/**
- * BullMQ notification queue producer.
- * Workers consume from this queue in separate processes.
- */
-export const notificationQueue = new Queue('notifications', {
+const defaultOptions: QueueOptions = {
   connection: redis as any,
   defaultJobOptions: {
     attempts: 3,
@@ -13,10 +9,20 @@ export const notificationQueue = new Queue('notifications', {
       type: 'exponential',
       delay: 1000,
     },
-    removeOnComplete: { count: 1000 },  // Keep last 1000 completed
-    removeOnFail: { count: 5000 },       // Keep last 5000 failed
+    removeOnComplete: { count: 1000 },
+    removeOnFail: { count: 5000 },
   },
-});
+};
+
+/**
+ * BullMQ SMS notification queue producer.
+ */
+export const smsQueue = new Queue('sms-notifications', defaultOptions);
+
+/**
+ * BullMQ Email notification queue producer.
+ */
+export const emailQueue = new Queue('email-notifications', defaultOptions);
 
 /**
  * Dead Letter Queue for notifications that fail after all retries.
@@ -25,4 +31,4 @@ export const notificationDLQ = new Queue('notifications-dlq', {
   connection: redis as any,
 });
 
-console.log('[Queue] Notification queue initialized');
+console.log('[Queue] Notification queues initialized');

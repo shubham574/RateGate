@@ -23,14 +23,9 @@ const resendProvider = new ResendProvider();
  * Processes EMAIL notifications from the BullMQ queue.
  */
 const emailWorker = new Worker<NotificationJobPayload>(
-  'notifications',
+  'email-notifications',
   async (job: Job<NotificationJobPayload>) => {
     const { notificationId, channel, recipient, renderedSubject, renderedBody } = job.data;
-
-    // Only process EMAIL jobs
-    if (channel !== 'EMAIL') {
-      return; // Skip — this job is for another worker
-    }
 
     console.log(`[EmailWorker] Processing job ${job.id} → ${recipient}`);
 

@@ -23,14 +23,9 @@ const twilioProvider = new TwilioProvider();
  * Processes SMS notifications from the BullMQ queue.
  */
 const smsWorker = new Worker<NotificationJobPayload>(
-  'notifications',
+  'sms-notifications',
   async (job: Job<NotificationJobPayload>) => {
     const { notificationId, channel, recipient, renderedBody } = job.data;
-
-    // Only process SMS jobs
-    if (channel !== 'SMS') {
-      return; // Skip — this job is for another worker
-    }
 
     console.log(`[SMSWorker] Processing job ${job.id} → ${recipient}`);
 
