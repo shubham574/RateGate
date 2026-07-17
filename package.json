@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc",
+    "build": "prisma generate && tsc && node -e \"const fs=require('fs');fs.cpSync('src/lua','dist/src/lua',{recursive:true});console.log('Lua scripts copied to dist.');\"",
     "start": "npx prisma db push --accept-data-loss && node dist/src/server.js",
     "start:railway": "npx prisma db push --accept-data-loss && node dist/src/server.js",
     "worker:email": "tsx src/workers/email.worker.ts",

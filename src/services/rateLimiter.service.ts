@@ -24,12 +24,14 @@ class RateLimiterService {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
+    // Resolve Lua scripts relative to this file (works in both dev/tsx and prod/node dist/)
+    const luaDir = path.join(__dirname, '..', 'lua');
     const slidingWindowScript = fs.readFileSync(
-      path.join(__dirname, '../lua/slidingWindow.lua'),
+      path.join(luaDir, 'slidingWindow.lua'),
       'utf-8'
     );
     const tokenBucketScript = fs.readFileSync(
-      path.join(__dirname, '../lua/tokenBucket.lua'),
+      path.join(luaDir, 'tokenBucket.lua'),
       'utf-8'
     );
 
