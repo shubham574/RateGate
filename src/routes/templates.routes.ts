@@ -89,7 +89,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 router.get('/:name', async (req: Request, res: Response): Promise<void> => {
   try {
     const { tenantId } = (req as Request & { auth: AuthenticatedRequest }).auth;
-    const { name } = req.params;
+    const name = req.params.name as string;
 
     const template = await TemplateService.findByName(tenantId, name);
 
@@ -120,7 +120,7 @@ router.patch(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { tenantId } = (req as Request & { auth: AuthenticatedRequest }).auth;
-      const { name } = req.params;
+      const name = req.params.name as string;
 
       const existing = await TemplateService.findByName(tenantId, name);
       if (!existing) {
@@ -153,7 +153,7 @@ router.patch(
 router.delete('/:name', async (req: Request, res: Response): Promise<void> => {
   try {
     const { tenantId } = (req as Request & { auth: AuthenticatedRequest }).auth;
-    const { name } = req.params;
+    const name = req.params.name as string;
 
     const existing = await TemplateService.findByName(tenantId, name);
     if (!existing) {
