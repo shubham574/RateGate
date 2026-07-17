@@ -6,6 +6,7 @@ import notifyRoutes from './routes/notify.routes';
 import rateLimitRulesRoutes from './routes/rateLimitRules.routes';
 import usageRoutes from './routes/usage.routes';
 import tenantRoutes from './routes/tenant.routes';
+import templatesRoutes from './routes/templates.routes';
 
 const app = express();
 
@@ -37,16 +38,18 @@ app.use('/v1/rate-limit-rules', apiKeyAuth, rateLimitRulesRoutes);
 app.use('/v1/usage', apiKeyAuth, usageRoutes);
 app.use('/v1/tenant', apiKeyAuth, tenantRoutes);
 app.use('/v1/api-keys', apiKeyAuth, apiKeyRoutes);
+app.use('/v1/templates', apiKeyAuth, templatesRoutes);
 
 // ─── Authenticated Routes (Dashboard / Clerk) ─────────────────
 const dashboardRouter = express.Router();
 dashboardRouter.use('/v1/auth', authRoutes); // /sync endpoint
 dashboardRouter.use(clerkAuth);
-dashboardRouter.use('/v1/notify', notifyRoutes);
-dashboardRouter.use('/v1/rate-limit-rules', rateLimitRulesRoutes);
-dashboardRouter.use('/v1/usage', usageRoutes);
-dashboardRouter.use('/v1/api-keys', apiKeyRoutes);
-dashboardRouter.use('/v1/tenant', tenantRoutes);
+  dashboardRouter.use('/v1/notify', notifyRoutes);
+  dashboardRouter.use('/v1/rate-limit-rules', rateLimitRulesRoutes);
+  dashboardRouter.use('/v1/usage', usageRoutes);
+  dashboardRouter.use('/v1/api-keys', apiKeyRoutes);
+  dashboardRouter.use('/v1/tenant', tenantRoutes);
+  dashboardRouter.use('/v1/templates', templatesRoutes);
 
 app.use('/dashboard', dashboardRouter);
 
