@@ -27,9 +27,8 @@ export function errorHandler(
 
   res.status(500).json({
     error: 'internal_server_error',
-    message:
-      process.env.NODE_ENV === 'development'
-        ? err.message
-        : 'An unexpected error occurred',
+    // TODO: revert to non-verbose after debugging
+    message: err.message || 'An unexpected error occurred',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 }
