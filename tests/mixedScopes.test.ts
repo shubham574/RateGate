@@ -85,6 +85,11 @@ afterAll(async () => {
   await redis.quit();
 });
 
+beforeEach(async () => {
+  // CRITICAL: Flush redis so rate limit counters from a previous test/run don't bleed in
+  await redis.flushdb();
+});
+
 describe('Mixed Scopes Rate Limiter', () => {
   it('should enforce the tightest winning scope dynamically and not consume quota on rejection', async () => {
     const recipientA = 'recipient-a@example.com';
