@@ -7,6 +7,9 @@ import { NotificationJobPayload } from '../types';
 import dotenv from 'dotenv';
 import { redis } from '../config/redis';
 import { notificationDLQ } from '../queues/notification.queue';
+import { webhookQueue } from '../queues/webhook.queue';
+import { buildPayload } from '../services/webhook.service';
+import { WebhookEvent } from '@prisma/client';
 
 // Load env since this runs as a separate process
 dotenv.config();
@@ -45,6 +48,37 @@ const emailWorker = new Worker<NotificationJobPayload>(
         },
       });
       console.log(`[EmailWorker] ✓ Sent to ${recipient} (msgId: ${result.providerMsgId})`);
+
+      // Enqueue webhook job for NOTIFICATION_SENT (if tenant has webhookUrl)
+      // TODO: Add NOTIFICATION_DELIVERED here when Resend delivery callbacks are wired in
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: job.data.tenantId },
+        select: { webhookUrl: true, webhookSecret: true },
+      });
+      if (tenant?.webhookUrl && tenant.webhookSecret) {
+        const notification = await prisma.notification.findUnique({
+          where: { id: notificationId },
+          select: { id: true, channel: true, recipient: true, status: true, providerMsgId: true, errorMessage: true },
+        });
+        if (notification) {
+          const payload = buildPayload(WebhookEvent.NOTIFICATION_SENT, {
+            notificationId: notification.id,
+            channel: notification.channel,
+            recipient: notification.recipient,
+            status: notification.status,
+            providerMsgId: notification.providerMsgId,
+            errorMessage: notification.errorMessage,
+          });
+          await webhookQueue.add('notification.sent', {
+            tenantId: job.data.tenantId,
+            notificationId,
+            event: WebhookEvent.NOTIFICATION_SENT,
+            webhookUrl: tenant.webhookUrl,
+            webhookSecret: tenant.webhookSecret,
+            payload: payload as any,
+          });
+        }
+      }
     } else {
       console.error(`[EmailWorker] ✗ Failed for ${recipient}: ${result.error}`);
       throw new Error(result.error); // Throw to trigger BullMQ retry
@@ -71,6 +105,29 @@ emailWorker.on('failed', async (job, err) => {
           errorMessage: err.message,
         },
       });
+
+      // Enqueue webhook job for NOTIFICATION_FAILED (if tenant has webhookUrl)
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: job.data.tenantId },
+        select: { webhookUrl: true, webhookSecret: true },
+      });
+      if (tenant?.webhookUrl && tenant.webhookSecret) {
+        const payload = buildPayload(WebhookEvent.NOTIFICATION_FAILED, {
+          notificationId: job.data.notificationId,
+          channel: job.data.channel,
+          recipient: job.data.recipient,
+          status: NotificationStatus.FAILED,
+          errorMessage: err.message,
+        });
+        await webhookQueue.add('notification.failed', {
+          tenantId: job.data.tenantId,
+          notificationId: job.data.notificationId,
+          event: WebhookEvent.NOTIFICATION_FAILED,
+          webhookUrl: tenant.webhookUrl,
+          webhookSecret: tenant.webhookSecret,
+          payload: payload as any,
+        });
+      }
 
       // Route to DLQ
       await notificationDLQ.add('failed-email', {

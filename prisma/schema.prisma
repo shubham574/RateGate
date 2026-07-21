@@ -35,6 +35,13 @@ enum RateLimitStrategy {
   TOKEN_BUCKET
 }
 
+enum WebhookEvent {
+  NOTIFICATION_SENT
+  NOTIFICATION_DELIVERED
+  NOTIFICATION_FAILED
+  NOTIFICATION_RATE_LIMITED
+}
+
 enum NotificationStatus {
   QUEUED
   SENT
@@ -51,14 +58,16 @@ model Tenant {
   email       String   @unique
   clerkUserId String?  @unique
   plan        Plan     @default(FREE)
-  webhookUrl  String?
-  createdAt   DateTime @default(now())
+  webhookUrl      String?
+  webhookSecret   String?
+  createdAt       DateTime @default(now())
 
-  apiKeys        ApiKey[]
-  templates      Template[]
-  rateLimitRules RateLimitRule[]
-  notifications  Notification[]
-  usageRecords   UsageRecord[]
+  apiKeys          ApiKey[]
+  templates        Template[]
+  rateLimitRules   RateLimitRule[]
+  notifications    Notification[]
+  usageRecords     UsageRecord[]
+  webhookDeliveries WebhookDelivery[]
 
   @@map("tenants")
 }
@@ -132,6 +141,25 @@ model Notification {
   @@index([tenantId, status])
   @@index([recipient])
   @@map("notifications")
+}
+
+model WebhookDelivery {
+  id             String       @id @default(cuid())
+  tenantId       String
+  notificationId String
+  event          WebhookEvent
+  url            String
+  payload        Json
+  statusCode     Int?
+  success        Boolean      @default(false)
+  attempt        Int          @default(1)
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("webhook_deliveries")
 }
 
 model UsageRecord {

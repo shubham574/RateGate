@@ -68,3 +68,16 @@ export interface DeliveryResult {
   providerMsgId?: string;
   error?: string;
 }
+
+// ─── Webhook Types ───────────────────────────────────────────
+
+export interface WebhookJobPayload {
+  tenantId: string;
+  notificationId: string;
+  /** WebhookEvent enum value */
+  event: string;
+  webhookUrl: string;
+  webhookSecret: string;
+  payload: Record<string, unknown>;
+}
+

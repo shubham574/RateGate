@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { RateLimitScope, Channel } from '@prisma/client';
+import { RateLimitScope, Channel, WebhookEvent } from '@prisma/client';
 import { rateLimiterService } from '../services/rateLimiter.service';
 import { AuthenticatedRequest, RateLimitResult } from '../types';
 import { prisma } from '../config/prisma';
+import { webhookQueue } from '../queues/webhook.queue';
+import { buildPayload } from '../services/webhook.service';
 
 export function normalizeRecipient(recipient: string, channel: Channel): string {
   if (channel === Channel.EMAIL) {
@@ -55,6 +57,30 @@ export async function rateLimiterMiddleware(
           idempotencyKey: req.body.idempotencyKey || null,
         }
       });
+
+      // Enqueue webhook for RATE_LIMITED event (fire-and-forget, non-blocking)
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { webhookUrl: true, webhookSecret: true },
+      });
+      if (tenant?.webhookUrl && tenant.webhookSecret) {
+        const webhookPayload = buildPayload(WebhookEvent.NOTIFICATION_RATE_LIMITED, {
+          notificationId: notification.id,
+          channel: channelEnum,
+          recipient,
+          status: 'RATE_LIMITED',
+          errorMessage,
+        });
+        // Don't await — webhook failure must never block the 429 response
+        webhookQueue.add('notification.rate_limited', {
+          tenantId,
+          notificationId: notification.id,
+          event: WebhookEvent.NOTIFICATION_RATE_LIMITED,
+          webhookUrl: tenant.webhookUrl,
+          webhookSecret: tenant.webhookSecret,
+          payload: webhookPayload as any,
+        }).catch((err) => console.error('[RateLimiter] Failed to enqueue webhook job:', err));
+      }
       
       res.status(429).json({
         error: 'rate_limit_exceeded',

@@ -7,6 +7,7 @@ import rateLimitRulesRoutes from './routes/rateLimitRules.routes';
 import usageRoutes from './routes/usage.routes';
 import tenantRoutes from './routes/tenant.routes';
 import templatesRoutes from './routes/templates.routes';
+import webhookRoutes from './routes/webhook.routes';
 
 const app = express();
 
@@ -39,6 +40,8 @@ app.use('/v1/usage', apiKeyAuth, usageRoutes);
 app.use('/v1/tenant', apiKeyAuth, tenantRoutes);
 app.use('/v1/api-keys', apiKeyAuth, apiKeyRoutes);
 app.use('/v1/templates', apiKeyAuth, templatesRoutes);
+// /v1/webhooks/deliveries is accessible via API key; /v1/webhooks/test is Clerk-only (registered below)
+app.use('/v1/webhooks', apiKeyAuth, webhookRoutes);
 
 // ─── Authenticated Routes (Dashboard / Clerk) ─────────────────
 const dashboardRouter = express.Router();
@@ -50,6 +53,8 @@ dashboardRouter.use(clerkAuth);
   dashboardRouter.use('/v1/api-keys', apiKeyRoutes);
   dashboardRouter.use('/v1/tenant', tenantRoutes);
   dashboardRouter.use('/v1/templates', templatesRoutes);
+  // All webhook routes (including POST /test) are available via Clerk auth
+  dashboardRouter.use('/v1/webhooks', webhookRoutes);
 
 app.use('/dashboard', dashboardRouter);
 

@@ -29,12 +29,16 @@ export function validate(schema: ZodSchema) {
 
 /**
  * Zod validation middleware for query parameters.
- * Validates req.query against the provided schema.
+ * Validates req.query against the provided schema and stores parsed/transformed
+ * result on res.locals.parsedQuery (since req.query is a read-only getter in Express).
  */
 export function validateQuery(schema: ZodSchema) {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      schema.parse(req.query);
+      const parsed = schema.parse(req.query);
+      // Store parsed/transformed result for route handlers to consume.
+      // We cannot overwrite req.query (read-only getter in Express 5).
+      res.locals.parsedQuery = parsed;
       next();
     } catch (error: any) {
       if (error.name === 'ZodError' && Array.isArray(error.issues)) {

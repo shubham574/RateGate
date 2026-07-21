@@ -116,7 +116,8 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { tenantId } = (req as Request & { auth: AuthenticatedRequest }).auth;
-      const query = req.query as any;
+      // Use the Zod-transformed parsed query (stored by validateQuery middleware)
+      const query = res.locals.parsedQuery ?? req.query;
       const status = query.status as string | undefined;
       const channel = query.channel as string | undefined;
       const startDate = query.startDate as string | undefined;
