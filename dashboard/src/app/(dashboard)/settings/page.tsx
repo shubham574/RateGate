@@ -287,18 +287,20 @@ export default function SettingsPage() {
 
                 {/* Regenerate dialog */}
                 <Dialog open={regenerateDialogOpen} onOpenChange={handleRegenerateDialogChange}>
-                  <DialogTrigger asChild>
-                    <Button
-                      id="regenerateSecretBtn"
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      disabled={isLoading}
-                    >
-                      <RotateCcw className="h-3.5 w-3.5" />
-                      {tenant?.hasWebhookSecret ? 'Regenerate' : 'Generate secret'}
-                    </Button>
-                  </DialogTrigger>
+                  <DialogTrigger
+                    render={
+                      <Button
+                        id="regenerateSecretBtn"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        disabled={isLoading}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {tenant?.hasWebhookSecret ? 'Regenerate' : 'Generate secret'}
+                      </Button>
+                    }
+                  />
                   <DialogContent className="max-w-md">
                     {!regenerateMutation.isSuccess ? (
                       <>
