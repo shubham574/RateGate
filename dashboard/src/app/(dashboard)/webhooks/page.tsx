@@ -131,13 +131,13 @@ export default function WebhooksPage() {
     setNextCursor(null);
   };
 
-  const handleEventFilterChange = (val: string) => {
-    setEventFilter(val);
+  const handleEventFilterChange = (val: string | null) => {
+    setEventFilter(val ?? 'all');
     handleFilterChange();
   };
 
-  const handleSuccessFilterChange = (val: string) => {
-    setSuccessFilter(val);
+  const handleSuccessFilterChange = (val: string | null) => {
+    setSuccessFilter(val ?? 'all');
     handleFilterChange();
   };
 
